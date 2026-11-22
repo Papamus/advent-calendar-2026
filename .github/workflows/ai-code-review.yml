@@ -30,6 +30,7 @@ jobs:
       - name: Check TypeScript and dependency vulnerabilities
         if: hashFiles('package.json') != ''
         run: |
+          npx next typegen
           npx tsc --noEmit
           npm audit --audit-level=high
 
