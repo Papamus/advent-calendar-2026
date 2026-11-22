@@ -1,3 +1,15 @@
+# Lokalny plik z kluczami
+.env*
+
+# Zależności i pliki budowania Next.js
+node_modules/
+.next/
+
+# Raporty z testów agenta QA (Playwright)
+playwright-report/
+test-results/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
