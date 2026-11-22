@@ -6,8 +6,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  models: read
 
 jobs:
   review:
@@ -15,90 +13,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "24"
 
-      - name: Run AI Code Review
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_REF: ${{ github.base_ref }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPO: ${{ github.repository }}
+      - name: Install dependencies
+        if: hashFiles('package.json') != ''
+        run: npm ci
+
+      - name: Check TypeScript and dependency vulnerabilities
+        if: hashFiles('package.json') != ''
         run: |
-          node -e '
-          const { execSync } = require("child_process");
-          const fs = require("fs");
+          npx tsc --noEmit
+          npm audit --audit-level=high
 
-          const diff = execSync(`git diff origin/${process.env.BASE_REF}...HEAD -- . ":(exclude)package-lock.json"`).toString();
-          if (!diff.trim()) {
-            console.log("Brak zmian do oceny.");
-            process.exit(0);
-          }
+      - name: Run deterministic Security & Quality Gate
+        run: node .github/scripts/security-quality-gate.mjs
 
-          const rules = fs.existsSync(".github/copilot-instructions.md")
-            ? fs.readFileSync(".github/copilot-instructions.md", "utf8")
-            : "";
-
-          const truncatedDiff = diff.slice(0, 28000);
-
-          const systemPrompt = `Jesteś bezkompromisowym AI Code Review Agentem. Oceniasz Pull Request pod kątem:
-          1. BEZPIECZEŃSTWA: zakaz walidacji daty na frontendzie (wyłącznie serwer w strefie Europe/Warsaw), brak wycieku przyszłych prezentów i obrazków (Strict Data Gating), poprawne ciasteczka HttpOnly/Secure/SameSite=Strict, ochrona Magic Linka przed skanerami poczty (wymagany POST), zabezpieczenie endpointu Cron przez CRON_SECRET.
-          2. UŻYTECZNOŚCI (UX/RWD): responsywność mobile + desktop, paleta Cozy Dark Festive (ciemne tła, przygaszone złoto, zero jaskrawych barw), płynne animacje.
-          3. POPRAWNOŚCI KODU: brak błędów TypeScript, czystość i obsługa błędów.
-
-          Zasady projektu:
-          ${rules}
-
-          Odpowiedz WYŁĄCZNIE poprawnym obiektem JSON w formacie:
-          {"approved": boolean, "summary": "krótkie podsumowanie po polsku", "details": "lista uwag w Markdown po polsku"}`;
-
-          (async () => {
-            const res = await fetch("https://models.github.ai/inference/chat/completions", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${process.env.GITHUB_TOKEN}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                model: "gpt-4o-mini",
-                temperature: 0.1,
-                response_format: { type: "json_object" },
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  { role: "user", content: `Oceń poniższy git diff:\n\n${truncatedDiff}` }
-                ]
-              })
-            });
-
-            if (!res.ok) {
-              const errText = await res.text();
-              throw new Error(`GitHub Models API error: ${res.status} ${errText}`);
-            }
-
-            const data = await res.json();
-            const review = JSON.parse(data.choices[0].message.content);
-            const badge = review.approved ? "✅ **APPROVED** przez AI Code Review Agent" : "❌ **CHANGES REQUESTED** przez AI Code Review Agent";
-
-            const body = `### ${badge}\n\n**Podsumowanie:** ${review.summary}\n\n${review.details}`;
-
-            await fetch(`https://api.github.com/repos/${process.env.REPO}/issues/${process.env.PR_NUMBER}/comments`, {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${process.env.GITHUB_TOKEN}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ body })
-            });
-
-            if (!review.approved) {
-              console.error("Code Review wykrył błędy wymagające poprawy.");
-              process.exit(1);
-            }
-          })();
-          '
+      - name: Test Security & Quality Gate
+        run: node --test .github/scripts/security-quality-gate.test.mjs
