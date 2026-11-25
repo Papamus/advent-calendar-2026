@@ -11,6 +11,8 @@
     "test:smoke": "npm run typecheck && playwright test"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
     "@supabase/supabase-js": "2.100.0",
     "framer-motion": "^14.14.0",
     "jose": "^6.2.18",
@@ -18,7 +20,8 @@
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "resend": "^6.39.0"
+    "resend": "^6.39.0",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",
@@ -26,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.187.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",

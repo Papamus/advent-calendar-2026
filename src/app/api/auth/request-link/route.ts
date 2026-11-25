@@ -46,7 +46,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const appUrl = getAppUrl("/auth/verify");
-  appUrl.searchParams.set("token", token);
+  appUrl.hash = new URLSearchParams({ token }).toString();
   const verificationUrl = appUrl.toString();
 
   try {

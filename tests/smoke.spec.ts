@@ -27,13 +27,13 @@ const invalidLockedDay = {
 
 void [calendarResponse, openedGift, invalidLockedDay];
 
-test("calendar page starts and renders all 24 windows", async ({ page }) => {
+test("unauthenticated visitors see the sign-in form", async ({ page }) => {
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: "Kalendarz Adwentowy" }),
+    page.getByRole("heading", { name: "Otwórz drzwi do grudniowej magii" }),
   ).toBeVisible();
-  await expect(page.getByTestId("calendar-day")).toHaveCount(24);
+  await expect(page.getByLabel("Adres e-mail")).toBeVisible();
 });
 
 test("calendar and image APIs reject requests without a session", async ({
