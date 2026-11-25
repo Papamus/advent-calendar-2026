@@ -1,5 +1,5 @@
 import { giftsSeed } from "@/data/gifts-seed";
-import { isCalendarDayUnlocked } from "@/lib/calendar/date-gate";
+import { getGiftImageAccessError } from "@/lib/calendar/gift-image-access";
 import { verifySession } from "@/lib/auth/session";
 import { internalServerError, jsonResponse } from "@/lib/http/responses";
 import { ensureCalendarSeeded, getSupabaseServerClient } from "@/lib/supabase/server";
@@ -55,8 +55,9 @@ export async function GET(
     return jsonResponse({ error: "Gift not found." }, 404);
   }
 
-  if (data.opened_at === null && !isCalendarDayUnlocked(dayNumber)) {
-    return jsonResponse({ error: "This gift image is not available." }, 403);
+  const accessError = getGiftImageAccessError(data.opened_at);
+  if (accessError) {
+    return accessError;
   }
 
   const { data: file, error: storageError } = await supabase.storage
