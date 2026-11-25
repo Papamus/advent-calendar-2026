@@ -1,5 +1,10 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { MagicLinkVerification } from "@/components/MagicLinkVerification";
+
+export const metadata: Metadata = {
+  referrer: "no-referrer",
+};
 
 function VerificationFallback() {
   return (

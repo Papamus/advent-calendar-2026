@@ -10,14 +10,19 @@ type VerificationState = "verifying" | "success" | "error";
 export function MagicLinkVerification() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token");
+  const queryToken = searchParams.get("token");
   const attemptedToken = useRef<string | null>(null);
-  const [state, setState] = useState<VerificationState>(
-    token ? "verifying" : "error",
-  );
+  const [state, setState] = useState<VerificationState>("verifying");
 
   useEffect(() => {
+    const token =
+      queryToken ??
+      new URLSearchParams(window.location.hash.slice(1)).get("token");
+
     if (!token) {
+      if (attemptedToken.current === null) {
+        setState("error");
+      }
       return;
     }
     if (attemptedToken.current === token) {
@@ -25,6 +30,10 @@ export function MagicLinkVerification() {
     }
 
     attemptedToken.current = token;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("token");
+    url.hash = "";
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
 
     async function verifyToken() {
       try {
@@ -46,7 +55,7 @@ export function MagicLinkVerification() {
     }
 
     void verifyToken();
-  }, [router, token]);
+  }, [queryToken, router]);
 
   return (
     <main className="calendar-shell">

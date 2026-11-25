@@ -175,7 +175,7 @@ test("automatically verifies a Magic Link before returning home", async ({
     route.fulfill({ status: 401, json: { error: "Unauthorized" } }),
   );
 
-  await page.goto("/auth/verify?token=sample-magic-token");
+  await page.goto("/auth/verify#token=sample-magic-token");
 
   await expect(
     page.getByRole("heading", { name: "Link potwierdzony" }),
@@ -185,11 +185,15 @@ test("automatically verifies a Magic Link before returning home", async ({
 });
 
 test("shows a clear error for a used or expired Magic Link", async ({ page }) => {
+  let verificationReferer: string | undefined;
   await page.route("**/api/auth/verify", (route) =>
-    route.fulfill({
-      status: 401,
-      json: { error: "Invalid or expired sign-in link." },
-    }),
+    {
+      verificationReferer = route.request().headers().referer;
+      return route.fulfill({
+        status: 401,
+        json: { error: "Invalid or expired sign-in link." },
+      });
+    },
   );
 
   await page.goto("/auth/verify?token=expired-token");
@@ -202,4 +206,6 @@ test("shows a clear error for a used or expired Magic Link", async ({ page }) =>
   ).toContainText(
     "Ten link wygasł albo został już użyty.",
   );
+  await expect(page).toHaveURL("/auth/verify");
+  expect(verificationReferer).toBeUndefined();
 });
