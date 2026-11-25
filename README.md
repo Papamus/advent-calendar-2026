@@ -10,8 +10,12 @@ npm install
 npm run dev
 ```
 
-Wymagane sekrety Supabase i pozostałe zmienne środowiskowe należy ustawić w
+Wymagane sekrety i pozostałe zmienne środowiskowe należy ustawić w
 lokalnym pliku `.env.local`; nie należy go commitować.
+Backend wymaga `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+`AUTH_SECRET` (minimum 32 bajty), `ALLOWED_RECIPIENT_EMAIL`, `APP_URL`,
+`RESEND_API_KEY`, `RESEND_FROM_EMAIL` (zweryfikowany nadawca Resend) oraz
+`CRON_SECRET`.
 
 ## Weryfikacja
 
@@ -24,8 +28,16 @@ node --test .github/scripts/security-quality-gate.test.mjs
 npm run build
 ```
 
-Migracja początkowego schematu znajduje się w
-`supabase/migrations/001_init_advent_calendar.sql`. Placeholdery treści są
-odizolowane w `src/data/gifts-seed.ts`. Workflow Pull Requestów uruchamia
-deterministyczną bramkę bezpieczeństwa i jakości bez wysyłania kodu do
-zewnętrznych usług AI.
+## Backend
+
+Zastosuj wszystkie migracje `supabase/migrations/` w kolejności; tworzą one
+schemat, prywatny bucket `gifts` oraz atomowe ustawianie `opened_at`.
+`POST /api/auth/request-link` wysyła jednorazowy link, a strona potwierdzenia
+powinna wymienić go przez `POST /api/auth/verify`. Endpointy kalendarza i
+obrazków wymagają ciasteczka sesyjnego. Cron Vercel wywołuje
+`/api/cron/notifications`; ustaw `CRON_SECRET` w ustawieniach projektu Vercel.
+Harmonogram `vercel.json` jest podany w UTC dla czasu CET.
+
+Placeholdery treści są odizolowane w `src/data/gifts-seed.ts`. Workflow Pull
+Requestów uruchamia deterministyczną bramkę bezpieczeństwa i jakości bez
+wysyłania kodu do zewnętrznych usług AI.
