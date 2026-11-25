@@ -7,9 +7,7 @@ export interface CalendarDaySummary {
   status: CalendarDayStatus;
 }
 
-export interface CalendarDayListResponse {
-  days: CalendarDaySummary[];
-}
+export type CalendarDayListResponse = CalendarDaySummary[];
 
 export interface OpenedGiftDetails {
   dayNumber: number;
@@ -17,4 +15,5 @@ export interface OpenedGiftDetails {
   title: string;
   description: string;
   imageUrl: string;
+  openedAt: string;
 }
