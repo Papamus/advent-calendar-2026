@@ -41,3 +41,13 @@ Harmonogram `vercel.json` jest podany w UTC dla czasu CET.
 Placeholdery treści są odizolowane w `src/data/gifts-seed.ts`. Workflow Pull
 Requestów uruchamia deterministyczną bramkę bezpieczeństwa i jakości bez
 wysyłania kodu do zewnętrznych usług AI.
+
+## Frontend
+
+Strona `/` rozpoczyna od `GET /api/calendar`: odpowiedź `401` pokazuje formularz
+Magic Link, a autoryzowana odpowiedź renderuje 24 okienka wyłącznie na podstawie
+serwerowych statusów. Otwieranie dnia korzysta z `POST /api/calendar/[day]/open`;
+szczegóły prezentu i obraz są pobierane dopiero po potwierdzonym otwarciu.
+`/auth/verify` potwierdza token żądaniem `POST`, a kalendarz 3D ma statyczny
+fallback, gdy przeglądarka nie obsługuje WebGL. Logika dostępności dni nie
+korzysta z zegara przeglądarki.
